@@ -1,5 +1,6 @@
 require "mmac/version"
+require "mmac/framework"
 
 module Mmac
-  # Your code goes here...
+
 end

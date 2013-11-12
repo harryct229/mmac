@@ -1,0 +1,14 @@
+0,sunny,1,hot,2,low,3,TRUE,swimming
+0,sunny,1,hot,2,high,3,TRUE,swimming
+0,overcast,1,warm,2,normal,3,FALSE,badminton
+0,rainy,1,cool,2,normal,3,FALSE,sah
+0,rainy,1,cool,2,high,3,TRUE,sah
+0,rainy,1,cool,2,high,3,FALSE,sah
+0,overcast,1,hot,2,high,3,FALSE,swimming
+0,sunny,1,warm,2,low,3,FALSE,swimming
+0,sunny,1,warm,2,high,3,FALSE,swimming
+0,rainy,1,warm,2,normal,3,FALSE,sah
+0,sunny,1,cool,2,high,3,FALSE,swimming
+0,overcast,1,cool,2,normal,3,TRUE,sah
+0,overcast,1,warm,2,low,3,FALSE,badminton
+0,rainy,1,warm,2,high,3,TRUE,sah

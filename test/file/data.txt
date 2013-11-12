@@ -1,0 +1,14 @@
+sunny,hot,low,TRUE,swimming
+sunny,hot,high,TRUE,swimming
+overcast,warm,normal,FALSE,badminton
+rainy,cool,normal,FALSE,sah
+rainy,cool,high,TRUE,sah
+rainy,cool,high,FALSE,sah
+overcast,hot,high,FALSE,swimming
+sunny,warm,low,FALSE,swimming
+sunny,warm,high,FALSE,football
+rainy,warm,normal,FALSE,sah
+sunny,cool,high,FALSE,badminton
+overcast,cool,normal,TRUE,football
+overcast,warm,low,FALSE,badminton
+rainy,warm,high,TRUE,sah
