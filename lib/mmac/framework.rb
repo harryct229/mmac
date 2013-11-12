@@ -1,11 +1,18 @@
 require File.dirname( __FILE__ ) + "/rule"
 require 'set'
+require 'pry'
+require 'ruby-progressbar'
 module Mmac
   #
   # Main Manager for MMac (contains all options, rules, ...)
   #
   #
   class Framework
+
+    # @return input file
+    #
+    attr_accessor :inputFile
+
     #
     # @return Array of data
     #
@@ -30,32 +37,36 @@ module Mmac
     # @return Array of Filter rules
     #
     attr_accessor :filtersPrint
+    attr_accessor :level
 
 
-    def initialize input_file, minSupp, minConf
+    def initialize inputFile, minSupp, minConf
+      @inputFile = inputFile
       @data = []
       @rules = []
       @filters = []
       @filtersPrint = []
       @minSupp = minSupp
       @minConf = minConf
+      @level = 0
 
-      puts 'Input from file ...'
-      parse_data(input_file)
-      puts 'Done!'
+      puts 'Input from file...'
+      parse_data(inputFile)
       @attrCount = @data.first.conditions.count
+      puts ("Number of data: " + "#{@data.count}")
+      puts ("Number of attr: " + "#{@attrCount}")
     end
 
     def run
-      puts 'Learning ...'
+      puts 'Learning...'
       self.normalize
       puts 'Done!'
       # Write to Filter file
-      File.open(File.dirname( __FILE__ ) + '/cache/filter.txt', 'a+') {|f| f.write(@filtersPrint.map{|p| p.conditions.join(",") + "," +  p.labels}.join("\n"))}
+      File.open(File.dirname(@inputFile) + '/filter.txt', 'w') {|f| f.write(@filtersPrint.map{|p| p.conditions.join(",") + "," +  p.labels}.join("\n"))}
     end
 
-    def parse_data input_file
-      line_array = File.readlines(input_file)
+    def parse_data inputFile
+      line_array = File.readlines(inputFile)
       line_array.each do |line|
         *conditions, label = line.strip.split(',')
         @data << Rule.new(Array[(0...conditions.size).zip conditions].flatten(1), label)
@@ -67,6 +78,8 @@ module Mmac
       filterSet = []
       blackList = []
       dataCount = @data.count
+      @level = @level + 1
+      puts ("Level " + "#{@level}")
 
       1.upto(attrCount).flat_map do |n|
         rules = []
@@ -77,15 +90,22 @@ module Mmac
 
           # All combinations with n attrs
           combinations = conditions.combination(n).to_a
-          rules += combinations.map{|c| Rule.new(c, label)}
+
+          # bList = blackList.map {|b| b.conditions if b.labels == label}.compact
+          # rules += combinations.select{|c| !(c - bList).empty?}.map{|c| Rule.new(c, label)} # Remove all combinations that in blacklist
+          rules += combinations.map{|c| Rule.new(c, label)} # Remove all combinations that in blacklist
         end
 
         # collect conditions without dup
         conRules = rules.map{|r| r.conditions}.to_set
+
+        # Log using progressbar
+        progressbar = ProgressBar.create(:title => "N = #{n}", :starting_at => 0, :total => conRules.count, :length => 100)
+
         conRules.each do |c|
-          # Placeholder for using blacklist
-          # => skip all blacklist rules
-          #
+          # increase
+          progressbar.increment
+
           arr = rules.select{|r| r.conditions == c}
           actOccr = arr.count
 
@@ -118,28 +138,13 @@ module Mmac
       end
       @filtersPrint += filterSet.map{|p| p.clone}
 
-
+      # Log Number of rule in level
+      puts ("Number of rules: " + "#{filterSet.count}")
       # recursive until Data empty
-      if !@data.empty?
+      if !@data.empty? && !filterSet.empty?
         self.normalize
       end
 
-      # Separate for Performance
-      # GC::Profiler.enable
-      # temps.each do |f|
-      #   label = f.labels
-      #   f.conditions.each do |ff|
-      #     arr = ff.to_a
-      #     arr.each do |elem|
-      #       @rules << Rule.new(elem, label)
-      #     end
-      #     # Free Memory
-      #     arr = []
-      #     GC::Profiler.clear
-      #     sleep 0.1
-      #   end
-      # end
-      # GC::Profiler.clear
     end
 
     def set_label sample_file
@@ -157,7 +162,7 @@ module Mmac
         end
         test << rule
       end
-      File.open(File.dirname(sample_file) + '/testOut.txt', 'a+') {|f| f.write(test.map{|p| p.conditions.join(",") + "," +  p.labels}.join("\n"))}
+      File.open(File.dirname(sample_file) + '/testOut.txt', 'w') {|f| f.write(test.map{|p| p.conditions.map{|c| c[1]}.join(",") + "," +  p.labels}.join("\n"))}
     end
 
   end
