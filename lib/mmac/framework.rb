@@ -91,13 +91,16 @@ module Mmac
           # All combinations with n attrs
           combinations = conditions.combination(n).to_a
 
-          # bList = blackList.map {|b| b.conditions if b.labels == label}.compact
-          # rules += combinations.select{|c| !(c - bList).empty?}.map{|c| Rule.new(c, label)} # Remove all combinations that in blacklist
-          rules += combinations.map{|c| Rule.new(c, label)} # Remove all combinations that in blacklist
+          bList = blackList.map {|b| b.conditions if b.labels == label}.compact
+          rules += combinations.select{|c| !c.contain_any_in?(bList)}.map{|c| Rule.new(c, label)} # Remove all combinations that in blacklist
+          # rules += combinations.map{|c| Rule.new(c, label)} # Remove all combinations that in blacklist
         end
 
         # collect conditions without dup
         conRules = rules.map{|r| r.conditions}.to_set
+        puts conRules.count
+        # break if have 0 rules
+        break if conRules.count == 0
 
         # Log using progressbar
         progressbar = ProgressBar.create(:title => "N = #{n}", :starting_at => 0, :total => conRules.count, :length => 100)
@@ -122,9 +125,12 @@ module Mmac
               blackList << Rule.new(c, s)
             end
           end
+
+          sleep 0.03
         end
         # break if all new combinations is < minSupp and minConf
         break if filterSet.count == filterCount
+        sleep 0.05
       end
 
       originalOrder = filterSet.clone
@@ -165,5 +171,14 @@ module Mmac
       File.open(File.dirname(sample_file) + '/testOut.txt', 'w') {|f| f.write(test.map{|p| p.conditions.map{|c| c[1]}.join(",") + "," +  p.labels}.join("\n"))}
     end
 
+  end
+end
+
+class Array
+  def contain_any_in?(arrayOfOther)
+    arrayOfOther.each do |p|
+      return true if (p - self).empty?
+    end
+    return false
   end
 end
