@@ -39,5 +39,9 @@ module Mmac
       self.conditions == other.conditions && self.labels == other.labels
     end
 
+    def isParent?(other)
+      (self.conditions - other.conditions).empty? && self.labels == other.labels
+    end
+
   end
 end
