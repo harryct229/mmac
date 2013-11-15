@@ -1,6 +1,6 @@
 # Mmac
 
-TODO: Write a gem description
+Multi-class multi-label associative classification (mmac) library for Ruby
 
 ## Installation
 
@@ -18,7 +18,16 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+Learning
+    
+    framework = Mmac::Framework.new('path/to/file/data.txt', MIN_SUPP, MIN_CONF)
+    framework.run
+    
+Set Label for Test File
+    
+    framework.set_label('path/to/file/test.txt')
+
+The output will be 'path/to/file/testOut.txt'
 
 ## Contributing
 
