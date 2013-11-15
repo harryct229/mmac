@@ -1,9 +1,3 @@
-x,s,n,t,p,f,c,n,k,e,e
-x,y,w,t,p,f,c,n,n,e,e
-x,y,w,t,p,f,c,n,p,e,e
-x,y,w,t,p,f,c,n,k,e,e
-x,s,n,t,p,f,c,n,n,e,e
-x,y,w,t,p,f,c,n,n,e,e
-x,s,n,t,p,f,c,n,k,e,e
-x,y,n,t,p,f,c,n,n,e,e
-f,s,w,t,p,f,c,n,n,e,e
+sunny,warm,high,FALSE,swimming
+sunny,cool,high,FALSE,swimming
+overcast,cool,normal,TRUE,sah

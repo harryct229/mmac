@@ -1,6 +1,4 @@
 require File.dirname( __FILE__ ) + "/rule"
-require 'set'
-require 'pry'
 require 'ruby-progressbar'
 module Mmac
   #
@@ -8,11 +6,6 @@ module Mmac
   #
   #
   class Framework
-
-    # @return input file
-    #
-    attr_accessor :inputFile
-
     #
     # @return Array of data
     #
@@ -37,8 +30,6 @@ module Mmac
     # @return Array of Filter rules
     #
     attr_accessor :filtersPrint
-    attr_accessor :level
-
 
     def initialize inputFile, minSupp, minConf
       @inputFile = inputFile
@@ -50,6 +41,7 @@ module Mmac
       @minConf = minConf
       @level = 0
 
+      puts ("MIN_SUPP: #{minSupp} - MIN_CONF: #{minConf}")
       puts 'Input from file...'
       parse_data(inputFile)
       @attrCount = @data.first.conditions.count
@@ -60,9 +52,15 @@ module Mmac
     def run
       puts 'Learning...'
       self.normalize
+      puts ("Total rules: " + "#{@filters.count}")
       puts 'Done!'
       # Write to Filter file
-      File.open(File.dirname(@inputFile) + '/filter.txt', 'w') {|f| f.write(@filtersPrint.map{|p| p.conditions.join(",") + "," +  p.labels}.join("\n"))}
+      filtersPrint = @filters.map{|p| p.clone}
+      filtersPrint.each do |filter|
+        hash = Hash[filter.conditions]
+        filter.conditions = (0..(@attrCount-1)).map{|index| hash[index] || ""}
+      end
+      File.open(File.dirname(@inputFile) + '/filter.txt', 'w') {|f| f.write(filtersPrint.map{|p| p.conditions.join(",") + "," +  p.labels}.join("\n"))}
     end
 
     def parse_data inputFile
@@ -89,16 +87,15 @@ module Mmac
           label      = data.labels
 
           # All combinations with n attrs
-          combinations = conditions.combination(n).to_a
+          combinations = conditions.combination(n)
 
           bList = blackList.map {|b| b.conditions if b.labels == label}.compact
           rules += combinations.select{|c| !c.contain_any_in?(bList)}.map{|c| Rule.new(c, label)} # Remove all combinations that in blacklist
-          # rules += combinations.map{|c| Rule.new(c, label)} # Remove all combinations that in blacklist
+          sleep 0.001
         end
 
         # collect conditions without dup
-        conRules = rules.map{|r| r.conditions}.to_set
-        puts conRules.count
+        conRules = rules.map{|r| r.conditions}.uniq
         # break if have 0 rules
         break if conRules.count == 0
 
@@ -110,9 +107,9 @@ module Mmac
           progressbar.increment
 
           arr = rules.select{|r| r.conditions == c}
-          actOccr = arr.count
+          actOccr = data.count{|d| (c - d.conditions).empty?}
 
-          set = arr.map{|a| a.labels}.to_set
+          set = arr.map{|a| a.labels}.uniq
           set.each do |s|
             suppCount = arr.count{|a| a.labels == s}
             # Calculate sup and conf
@@ -121,7 +118,7 @@ module Mmac
 
             if supp >= minSupp && conf >= minConf
               filterSet << Rule.new(c, s, supp, conf, actOccr)
-            else
+            elsif supp < minSupp
               blackList << Rule.new(c, s)
             end
           end
@@ -135,14 +132,11 @@ module Mmac
 
       originalOrder = filterSet.clone
       filterSet = filterSet.sort_by{|s| [-s.conf, -s.supp, -s.actOccr, s.conditions.count, originalOrder.index(s)]}
-      @filters += filterSet.map{|p| p.clone}
+      @filters += filterSet
       filterSet.each do |filter|
         # Remove data that contain filter create T'
         @data -= @data.select{|data| data.labels == filter.labels && (filter.conditions - data.conditions).empty?}
-        hash = Hash[filter.conditions]
-        filter.conditions = (0..(@attrCount-1)).map{|index| hash[index] || ""}
       end
-      @filtersPrint += filterSet.map{|p| p.clone}
 
       # Log Number of rule in level
       puts ("Number of rules: " + "#{filterSet.count}")
@@ -177,7 +171,9 @@ end
 class Array
   def contain_any_in?(arrayOfOther)
     arrayOfOther.each do |p|
-      return true if (p - self).empty?
+      if (p - self).empty?
+        return true
+      end
     end
     return false
   end
