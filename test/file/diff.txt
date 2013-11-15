@@ -1,3 +1,0 @@
-sunny,warm,high,FALSE,swimming
-sunny,cool,high,FALSE,swimming
-overcast,cool,normal,TRUE,sah
