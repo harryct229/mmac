@@ -81,6 +81,7 @@ module Mmac
       @level = @level + 1
       puts ("Level " + "#{@level}")
 
+      beginning_time = Time.now
       1.upto(attrCount).flat_map do |n|
         rules = []
         filterCount = filterSet.count
@@ -104,10 +105,7 @@ module Mmac
         end
 
         # convert from Lazy Enumerable to Array - Longest Time comsuming
-        beginning_time = Time.now
         rules.map!{|r| r.to_a}.flatten!(1)
-        end_time = Time.now
-        puts ("Done in #{end_time - beginning_time} s")
 
         # collect conditions without dup
         conRules = rules.map{|r| r.conditions}.uniq
@@ -138,11 +136,9 @@ module Mmac
             end
           end
 
-          sleep 0.03
         end
         # break if all new combinations is < minSupp and minConf
         break if filterSet.count == filterCount
-        sleep 0.05
       end
 
       originalOrder = filterSet.clone
@@ -153,6 +149,9 @@ module Mmac
         @data -= @data.select{|data| data.labels == filter.labels && (filter.conditions - data.conditions).empty?}
       end
 
+      # Log time
+      end_time = Time.now
+      puts ("Done in #{end_time - beginning_time} s")
       # Log Number of rule in level
       puts ("Number of rules: " + "#{filterSet.count}")
       # recursive until Data empty
