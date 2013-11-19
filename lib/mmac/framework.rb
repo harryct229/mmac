@@ -1,5 +1,6 @@
 require File.dirname( __FILE__ ) + "/rule"
 require 'ruby-progressbar'
+require 'pry'
 module Mmac
   #
   # Main Manager for MMac (contains all options, rules, ...)
@@ -89,15 +90,21 @@ module Mmac
           conditions = data.conditions
           label      = data.labels
 
+          # Remove conditions that in blackList[label] with 1 attr before make combinations
+          #    TODO: make to use with 2,3,... attrs - much more complicated
+          conditions -= blackList[label].select{|p| p.count == 1}.flatten(1) unless blackList[label].nil?
+
+          next if conditions.count < n
+
           # All combinations with n attrs
           combinations = conditions.combination(n)
-          # rules.concat(combinations.select{|c| !c.contain_any_in?(blackList[label])}.map{|c| Rule.new(c, label)}) # Remove all combinations that in blacklist
+          # rules.concat(combinations.select{|c| !c.contain_any_in?(blackList[label])}.map{|c| Rule.new(c, label)}) # Remove all combinations that in blackList
 
           # Lazy method
-          rules << combinations.lazy_reject{|c| c.contain_any_in?(blackList[label])}.lazy_map{|c| Rule.new(c, label)} # Remove all combinations that in blacklist
+          rules << combinations.lazy_reject{|c| c.contain_any_in?(blackList[label])}.lazy_map{|c| Rule.new(c, label)} # Remove all combinations that in blackList
         end
 
-        # convert from Enumerable to Array - Longest Time comsuming
+        # convert from Lazy Enumerable to Array - Longest Time comsuming
         beginning_time = Time.now
         rules.map!{|r| r.to_a}.flatten!(1)
         end_time = Time.now
