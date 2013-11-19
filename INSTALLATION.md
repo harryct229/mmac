@@ -23,6 +23,7 @@ Arch Linux uses a package manager named pacman. To get Ruby, just do this:
 
 # Run Program
 
+  $ bundle
   $ cd test/
   $ ruby test.rb
 
