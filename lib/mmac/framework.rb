@@ -151,7 +151,7 @@ module Mmac
 
       # Log time
       end_time = Time.now
-      puts ("Done in #{end_time - beginning_time} s")
+      puts ("Done in #{(end_time - beginning_time).round(4)} s")
       # Log Number of rule in level
       puts ("Number of rules: " + "#{filterSet.count}")
       # recursive until Data empty
