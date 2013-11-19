@@ -4,8 +4,8 @@
 require_relative '../lib/mmac'
 
 puts 'Run program...'
-MIN_SUPP = 0.3
-MIN_CONF = 0.5
+MIN_SUPP = 0.4
+MIN_CONF = 0.6
 framework = Mmac::Framework.new(File.dirname( __FILE__ ) + '/file/data.txt', MIN_SUPP, MIN_CONF)
 framework.run
 
