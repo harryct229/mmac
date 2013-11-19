@@ -1,6 +1,5 @@
 require File.dirname( __FILE__ ) + "/rule"
 require 'ruby-progressbar'
-require 'pry'
 module Mmac
   #
   # Main Manager for MMac (contains all options, rules, ...)
