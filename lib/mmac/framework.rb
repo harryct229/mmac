@@ -83,11 +83,11 @@ module Mmac
       @level = @level + 1
       puts ("\nLevel " + "#{@level}")
 
+      beginning_time = Time.now
       1.upto(attrCount).flat_map do |n|
         rules = []
         filterCount = filterSet.count
 
-        beginning_time = Time.now
         @data.each do |data|
           conditions = data.conditions
           label      = data.labels
