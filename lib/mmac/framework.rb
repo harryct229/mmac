@@ -78,37 +78,49 @@ module Mmac
       # Apriori
       filterSet = []
       blackList = {}
+      whiteList = {}
       dataCount = @data.count
       @level = @level + 1
-      puts ("Level " + "#{@level}")
+      puts ("\nLevel " + "#{@level}")
 
       1.upto(attrCount).flat_map do |n|
         rules = []
         filterCount = filterSet.count
 
+        beginning_time = Time.now
         @data.each do |data|
           conditions = data.conditions
           label      = data.labels
 
           # Remove conditions that in blackList[label] with 1 attr before make combinations
           #    TODO: make to use with 2,3,... attrs - much more complicated
+          # NOTE: Can use whiteList (separate data lines) of previous N then combine with conditions a.product(b).flatten(1).uniq then check count == N
           conditions -= blackList[label].select{|p| p.count == 1}.flatten(1) unless blackList[label].nil?
 
           next if conditions.count < n
 
-          # All combinations with n attrs
-          combinations = conditions.combination(n)
-          # rules.concat(combinations.select{|c| !c.contain_any_in?(blackList[label])}.map{|c| Rule.new(c, label)}) # Remove all combinations that in blackList
+          if !whiteList[label].nil?
+            tmp = []
+            whiteList[label].each do |w|
+              if (w - conditions).empty?
+                tmp.concat(w.product(conditions).map{|c| c.uniq}.select{|c| c.count == n})
+              end
+            end
+            rules.concat( tmp.map{|p| p.sort}.uniq.map{|c| Rule.new(c, label)} )
+          else
+            # All combinations with n attrs
+            combinations = conditions.combination(n)
+            rules.concat(combinations.select{|c| !c.contain_any_in?(blackList[label])}.map{|c| Rule.new(c, label)}) # Remove all combinations that in blackList
 
-          # Lazy method
-          rules << combinations.lazy_reject{|c| c.contain_any_in?(blackList[label])}.lazy_map{|c| Rule.new(c, label)} # Remove all combinations that in blackList
+            # Lazy method
+            # rules += combinations.lazy_reject{|c| c.contain_any_in?(blackList[label])}.lazy_map{|c| Rule.new(c, label)} # Remove all combinations that in blackList
+          end
+
         end
+        whiteList = {}
 
         # convert from Lazy Enumerable to Array - Longest Time comsuming
-        beginning_time = Time.now
-        rules.map!{|r| r.to_a}.flatten!(1)
-        end_time = Time.now
-        puts ("Done in #{end_time - beginning_time} s")
+        # rules.map!{|r| r.to_a}.flatten!(1)
 
         # collect conditions without dup
         conRules = rules.map{|r| r.conditions}.uniq
@@ -132,6 +144,9 @@ module Mmac
             supp = suppCount.fdiv(dataCount)
             conf = suppCount.fdiv(actOccr)
 
+            if supp >= minSupp
+              whiteList.merge!({label => [c]}){|key, oldVal, newVal| [oldVal,newVal].flatten(1).uniq}
+            end
             if supp >= minSupp && conf >= minConf
               filterSet << Rule.new(c, label, supp, conf, actOccr)
             elsif supp < minSupp
@@ -139,11 +154,9 @@ module Mmac
             end
           end
 
-          sleep 0.03
         end
         # break if all new combinations is < minSupp and minConf
         break if filterSet.count == filterCount
-        sleep 0.05
       end
 
       originalOrder = filterSet.clone
@@ -154,6 +167,9 @@ module Mmac
         @data -= @data.select{|data| data.labels == filter.labels && (filter.conditions - data.conditions).empty?}
       end
 
+      # Log Time
+      end_time = Time.now
+      puts ("Done in #{(end_time - beginning_time).round(4)} s")
       # Log Number of rule in level
       puts ("Number of rules: " + "#{filterSet.count}")
       # recursive until Data empty
