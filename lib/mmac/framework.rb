@@ -51,9 +51,11 @@ module Mmac
 
     def run
       puts 'Learning...'
+      beginning_time = Time.now
       self.normalize
       puts ("Total rules: " + "#{@filters.count}")
-      puts 'Done!'
+      end_time = Time.now
+      puts ("Done in #{((end_time - beginning_time)/60).round(4)} minute(s)")
       # Write to Filter file
       filtersPrint = @filters.map{|p| p.clone}
       filtersPrint.each do |filter|
@@ -74,7 +76,7 @@ module Mmac
     def normalize
       # Apriori
       filterSet = []
-      blackList = []
+      blackList = {}
       dataCount = @data.count
       @level = @level + 1
       puts ("Level " + "#{@level}")
@@ -82,17 +84,24 @@ module Mmac
       1.upto(attrCount).flat_map do |n|
         rules = []
         filterCount = filterSet.count
+
         @data.each do |data|
           conditions = data.conditions
           label      = data.labels
 
           # All combinations with n attrs
           combinations = conditions.combination(n)
+          # rules.concat(combinations.select{|c| !c.contain_any_in?(blackList[label])}.map{|c| Rule.new(c, label)}) # Remove all combinations that in blacklist
 
-          bList = blackList.map {|b| b.conditions if b.labels == label}.compact
-          rules += combinations.select{|c| !c.contain_any_in?(bList)}.map{|c| Rule.new(c, label)} # Remove all combinations that in blacklist
-          sleep 0.001
+          # Lazy method
+          rules << combinations.lazy_reject{|c| c.contain_any_in?(blackList[label])}.lazy_map{|c| Rule.new(c, label)} # Remove all combinations that in blacklist
         end
+
+        # convert from Enumerable to Array - Longest Time comsuming
+        beginning_time = Time.now
+        rules.map!{|r| r.to_a}.flatten!(1)
+        end_time = Time.now
+        puts ("Done in #{end_time - beginning_time} s")
 
         # collect conditions without dup
         conRules = rules.map{|r| r.conditions}.uniq
@@ -109,17 +118,17 @@ module Mmac
           arr = rules.select{|r| r.conditions == c}
           actOccr = data.count{|d| (c - d.conditions).empty?}
 
-          set = arr.map{|a| a.labels}.uniq
-          set.each do |s|
-            suppCount = arr.count{|a| a.labels == s}
+          labels = arr.map{|a| a.labels}.uniq
+          labels.each do |label|
+            suppCount = arr.count{|a| a.labels == label}
             # Calculate sup and conf
             supp = suppCount.fdiv(dataCount)
             conf = suppCount.fdiv(actOccr)
 
             if supp >= minSupp && conf >= minConf
-              filterSet << Rule.new(c, s, supp, conf, actOccr)
+              filterSet << Rule.new(c, label, supp, conf, actOccr)
             elsif supp < minSupp
-              blackList << Rule.new(c, s)
+              blackList.merge!({label => [c]}){|key, oldVal, newVal| [oldVal,newVal].flatten(1).uniq}
             end
           end
 
@@ -131,8 +140,8 @@ module Mmac
       end
 
       originalOrder = filterSet.clone
-      filterSet = filterSet.sort_by{|s| [-s.conf, -s.supp, -s.actOccr, s.conditions.count, originalOrder.index(s)]}
-      @filters += filterSet
+      filterSet.sort_by!{|s| [-s.conf, -s.supp, -s.actOccr, s.conditions.count, originalOrder.index(s)]}
+      @filters.concat(filterSet)
       filterSet.each do |filter|
         # Remove data that contain filter create T'
         @data -= @data.select{|data| data.labels == filter.labels && (filter.conditions - data.conditions).empty?}
@@ -170,11 +179,36 @@ end
 
 class Array
   def contain_any_in?(arrayOfOther)
+    return false if arrayOfOther.nil?
     arrayOfOther.each do |p|
       if (p - self).empty?
         return true
       end
     end
     return false
+  end
+end
+
+class Enumerator
+  def defer(&blk)
+    self.class.new do |y|
+      each do |*input|
+        blk.call(y, *input)
+      end
+    end
+  end
+
+  def self.continually(&blk)
+    self.new do |y|
+      loop { y << blk.call }
+    end
+  end
+
+  def lazy_reject
+    defer { |out, inp| out << inp unless yield(inp) }
+  end
+
+  def lazy_map
+    defer { |out, inp| out << yield(inp) }
   end
 end
