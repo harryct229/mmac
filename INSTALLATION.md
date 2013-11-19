@@ -2,13 +2,13 @@
 
 ## Linux
 
-Debian GNU/Linux or Ubuntu use the apt package manager system. You can use it like this:
+  Debian GNU/Linux or Ubuntu use the apt package manager system. You can use it like this:
 
-  $ sudo apt-get install ruby1.9.1
+    $ sudo apt-get install ruby1.9.1
 
-Arch Linux uses a package manager named pacman. To get Ruby, just do this:
+  Arch Linux uses a package manager named pacman. To get Ruby, just do this:
 
-  $ sudo pacman -S ruby
+    $ sudo pacman -S ruby
 
 ## Windows
 
@@ -18,12 +18,12 @@ Arch Linux uses a package manager named pacman. To get Ruby, just do this:
 
   Many people on Mac OS X use Homebrew as a package manager. It’s really easy to get Ruby:
 
-  $ brew install ruby
+    $ brew install ruby
 
 
 # Run Program
 
-  $ bundle
-  $ cd test/
-  $ ruby test.rb
+    $ bundle
+    $ cd test/
+    $ ruby test.rb
 
