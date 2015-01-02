@@ -11,6 +11,7 @@ Gem::Specification.new do |gem|
   gem.description   = ["MMAC Project"]
   gem.summary       = ["MMAC Library"]
   gem.homepage      = ""
+  gem.license       = "MIT"
 
   gem.files         = `git ls-files`.split($/)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
